@@ -1,0 +1,14 @@
+globalStore.goal_space = mapN(function (x) { return x }, 3)
+
+var goal_prior = function () {
+    var num_goals = globalStore.goal_space.length
+    return map(function (x) { x / num_goals }, [1, 1, 1])
+}
+
+var goal_likelihood_one_time_step = function (beta, q_value) {
+    return Math.exp(beta * q_value)
+}
+
+var goal_likelihood_entire_sequence = function (state_seq)
+
+display(goal_likelihood(0.1, 1))

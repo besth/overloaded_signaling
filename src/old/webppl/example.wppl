@@ -1,0 +1,23 @@
+var model = function () {
+   var strength = mem(function (person) { return gaussian(50, 10) })
+   var lazy = function (person) { return flip(1 / 3) }
+   var pulling = function (person) {
+      return lazy(person) ? strength(person) / 2 : strength
+   }
+
+   var totalPulling = function (team) {
+      return sum(map(pulling, team))
+   }
+   var winner = function (team1, team2) {
+      return totalPulling(team1) > totalPulling(team2) ? team1 : team2
+   }
+   var beat = function (team1, team2) { winner(team1, team2) == team1 }
+
+   condition(beat(["Tom"], ["Bill"]))
+   return strength("Tom")
+}
+
+var options = { method: "MCMC", kernel: "MH", samples: 10000 }
+var dist = Infer(options, model)
+
+display("expected strength: " + expectation(dist))
