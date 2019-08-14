@@ -106,3 +106,4 @@ venv.bak/
 # supp documents
 documents/
 .vscode/
+.DS_store
