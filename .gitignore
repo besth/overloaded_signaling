@@ -105,3 +105,4 @@ venv.bak/
 
 # supp documents
 documents/
+.vscode/
