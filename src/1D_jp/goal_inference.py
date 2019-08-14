@@ -1,4 +1,6 @@
+import os
 import numpy as np
+import matplotlib.pyplot as plt
 from util import SIGNAL_DICT, WORLD_DICT, GOAL_DICT, SIGNAL_DICT, WORLD_DICT, GOAL_DICT, GOAL_REWARD, SIGNAL_REW_DICT
 
 
@@ -18,7 +20,8 @@ class GoalInference:
         self.goal_prior = self.get_goal_prior()
 
     def get_goal_prior(self):
-        return [1 / len(self.goals) for _ in self.goals]
+        return [0.23, 0.77]
+        # return [1 / len(self.goals) for _ in self.goals]
 
     def create_lexicon(self):
         lex = np.zeros((len(self.signals), len(self.goals)))
@@ -88,13 +91,76 @@ class GoalInference:
         return list(goal_dist)
 
 
+def plot(path="plot/"):
+    worlds = list(WORLD_DICT.keys())
+    worlds_ind = [WORLD_DICT[w] for w in worlds]
+
+    signals = ["help", "help-Any"]
+    signals_ind = [SIGNAL_DICT[s] for s in signals]
+
+    betas = np.arange(0, 0.55, 0.05).round(2)
+    # p_fars = np.zeros((len(signals), len(betas)))
+    fig, axs = plt.subplots(len(signals), len(betas), sharey=True)
+
+    p_far_gt = [0.49, 0.23]
+    error = [0.29, 0.34]
+
+    for b_i in range(len(betas)):
+        GI = GoalInference(beta=betas[b_i])
+        for s_i in range(len(signals)):
+            p_far = [(GI(SIGNAL_DICT[signals[s_i]], w_ind))[0]
+                     for w_ind in worlds_ind]
+
+            bar_width = 0.25
+            x1 = np.arange(len(p_far))
+            x2 = [x + bar_width for x in x1]
+
+            curr = axs[s_i, b_i]
+            curr.bar(x1,
+                     p_far_gt,
+                     color=[(0.2, 0.4, 0.6, 0.9), (0.6, 0.4, 0.2, 0.9)],
+                     yerr=error,
+                     width=bar_width)
+            curr.bar(x2,
+                     p_far,
+                     color=[(0.2, 0.4, 0.6, 0.5), (0.6, 0.4, 0.2, 0.5)],
+                     width=bar_width)
+
+            curr.set_title("beta= {}".format(betas[b_i]), fontsize=6)
+            # curr.set_xticks([0, 1], ["HF", "HT"])
+            if b_i == 0:
+                curr.set(ylabel=signals[s_i])
+
+    plt.setp(axs, xticks=[0, 1], xticklabels=['HF', 'HT'])
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+    title = "goal_dist.png"
+    plt.tight_layout()
+    plt.savefig(os.path.join(path, title))
+    plt.show()
+
+
+def plot_paper_results():
+    plt.figure()
+    x = ['F', 'T']
+    y = [0.49, 0.23]
+    error = [0.29, 0.34]
+
+    plt.bar(x, y, yerr=error, color=["blue", "red"])
+    plt.show()
+
+
 def test():
-    GI = GoalInference(beta=0.1)
+    GI = GoalInference(beta=0.2)
     signal = SIGNAL_DICT["help-Any"]
     world = WORLD_DICT["hands-tied"]
+    print(world)
     goal_dist = GI(signal, world)
     print(goal_dist)
 
 
 if __name__ == "__main__":
-    test()
+    plot()
+    # test()
+    # plot_paper_results()
