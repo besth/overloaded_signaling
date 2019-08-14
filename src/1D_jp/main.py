@@ -57,8 +57,6 @@ def main(goal_ind, signal, env_type):
         inferred_goal = {np.argmax(inferred_goal_dist)}
     print("Goal Distribution:", inferred_goal_dist, ", Inferred goal:",
           inferred_goal)
-    # goal_real = goal_space[goal_ind]
-    # state_space_prev = env.state_space
 
     # Learning the value dict using value iteration
     v_list_jp = vi_jp(inferred_goal)
@@ -87,8 +85,6 @@ def main(goal_ind, signal, env_type):
         states = next_states
         state_seq.append(states)
         if env.is_terminal_state(states):
-            # print("in terminal state", states)
-            # print("test-terminal", env.transition((1, 7, set()), (-1, 0)))
             render(states)
             break
 

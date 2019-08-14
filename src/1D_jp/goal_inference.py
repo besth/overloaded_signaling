@@ -6,15 +6,18 @@ class GoalInference:
     def __init__(self, beta):
         self.beta = beta
 
-        self.signals = list(range(4))
-        self.worlds = list(range(2))
-        self.goals = list(range(2))
+        self.num_signals = len(SIGNAL_DICT)
+        self.num_worlds = len(WORLD_DICT)
+        self.num_goals = len(GOAL_DICT)
+
+        self.signals = list(range(self.num_signals))
+        self.worlds = list(range(self.num_worlds))
+        self.goals = list(range(self.num_goals))
 
         self.lexicon = self.create_lexicon()
         self.goal_prior = self.get_goal_prior()
 
     def get_goal_prior(self):
-        # return [0.23, 0.77]
         return [1 / len(self.goals) for _ in self.goals]
 
     def create_lexicon(self):
@@ -45,28 +48,10 @@ class GoalInference:
         return lex
 
     def reward_signal(self, signal, world):
-        if signal != "get-A" and signal != "get-B":
+        if signal != SIGNAL_DICT["get-A"] and signal != SIGNAL_DICT["get-B"]:
             return SIGNAL_REW_DICT[signal]
         else:
             return SIGNAL_REW_DICT[signal][world]
-        # if world == WORLD_DICT["hands-free"]:
-        #     if signal == SIGNAL_DICT["help"]:
-        #         return -1
-        #     elif signal == SIGNAL_DICT["get-A"]:
-        #         return -2
-        #     elif signal == SIGNAL_DICT["get-B"]:
-        #         return -2
-        #     elif signal == SIGNAL_DICT["get-Any"]:
-        #         return -3
-        # elif world == WORLD_DICT["hands-tied"]:
-        #     if signal == SIGNAL_DICT["help"]:
-        #         return -1
-        #     elif signal == SIGNAL_DICT["get-A"]:
-        #         return -2
-        #     elif signal == SIGNAL_DICT["get-B"]:
-        #         return -2
-        #     elif signal == SIGNAL_DICT["get-Any"]:
-        #         return -3
 
     def reward_goal(self, goal, gt_goal):
         return (goal == gt_goal) * GOAL_REWARD
@@ -105,9 +90,8 @@ class GoalInference:
 
 def test():
     GI = GoalInference(beta=0.1)
-    signal = SIGNAL_DICT["help"]
-    world = WORLD_DICT["hands-free"]
-
+    signal = SIGNAL_DICT["help-Any"]
+    world = WORLD_DICT["hands-tied"]
     goal_dist = GI(signal, world)
     print(goal_dist)
 
