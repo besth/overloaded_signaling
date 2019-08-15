@@ -14,6 +14,8 @@ def softmax(values: list):
 
     return sm_values
 
+
+class ValueIteration:
     def __init__(self, gamma, epsilon, env):
         self.gamma = gamma
         self.epsilon = epsilon
