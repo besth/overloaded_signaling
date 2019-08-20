@@ -53,16 +53,20 @@ class ValueIteration:
         self.env.set_goal(goal)
 
         # initialize value for all states(including terminal states)
+        total_states = len(self.env.state_space)
         v_list = [0 for s in self.env.state_space]
         while True:
             error = 0
 
             for i, s in enumerate(self.env.state_space):
+                print("processing state:", i, ", out of", total_states)
                 if s in self.env.state_space_no_terminal:
                     curr_v = v_list[i]
                     q_values = self.one_step_lookahead(v_list, s)
                     v_list[i] = max(q_values)
                     error = max(error, abs(curr_v - v_list[i]))
+
+                print("error", error)
 
             if error < self.epsilon:
                 break
