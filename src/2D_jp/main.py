@@ -24,16 +24,19 @@ def get_perf_measure(vi, num_tests):
     max_episode_len = 20
     state = start_state
     curr_step = 0
+    optimal_steps = 0
 
     while True:
         if curr_step >= max_episode_len:
             break
 
         if vi.env.is_terminal_state(state):
-            # print("Reached terminal state")
             break
 
         action = vi.select_action(v_tables, state, method="max")
+        for a in action:
+            if a != (0, 0):
+                optimal_steps += 1
 
         next_state = vi.env.transition(state, action)
 
@@ -41,25 +44,25 @@ def get_perf_measure(vi, num_tests):
 
         curr_step += 1
 
-    optimal_steps = curr_step
+    # optimal_steps = curr_step
 
-    # print(state)
-    # curr_step = 0
     steps = []
     for i in range(num_tests):
         print("test step", i)
+        steps.append(0)
         state = start_state
         curr_step = 0
         while True:
             if curr_step >= max_episode_len:
                 break
 
-            # print(curr_step)
             if vi.env.is_terminal_state(state):
-                # print("Reached terminal state")
                 break
 
             action = vi.select_action(v_tables, state, method="softmax")
+            for a in action:
+                if a != (0, 0):
+                    steps[-1] += 1
 
             next_state = vi.env.transition(state, action)
 
@@ -67,8 +70,7 @@ def get_perf_measure(vi, num_tests):
 
             curr_step += 1
 
-        # print(curr_step)
-        steps.append(curr_step)
+        # steps.append(curr_step)
 
     avg_steps = np.mean(steps)
     std_steps = np.std(steps)
@@ -77,7 +79,7 @@ def get_perf_measure(vi, num_tests):
 
 
 @click.command()
-@click.option("--goal-ind", default=2, help="goal index: 0 or 1")
+@click.option("--goal-ind", default=1, help="goal index: 0 or 1")
 @click.option("--env-type",
               default=0,
               help="env type: 0(cannot move), 1(move)")
@@ -106,7 +108,8 @@ def run(goal_ind, env_type, train, test, display, save_perf, num_tests):
 
     gamma = 0.99
     epsilon = 0.01
-    vi_jp = ValueIteration(gamma=gamma, epsilon=epsilon, env=env)
+    tau = 0.2
+    vi_jp = ValueIteration(gamma=gamma, epsilon=epsilon, tau=tau, env=env)
 
     render = Render2DGrid(env)
 

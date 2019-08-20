@@ -3,17 +3,19 @@ import numpy as np
 from util import StateEncoding
 
 
-def softmax(values: list):
-    exp_values = np.exp(values)
+def softmax(values: list, temp=1.0):
+    reweighted = np.asarray(values) / temp
+    exp_values = np.exp(reweighted)
     sm_values = exp_values / np.sum(exp_values)
 
     return sm_values
 
 
 class ValueIteration:
-    def __init__(self, gamma, epsilon, env):
+    def __init__(self, gamma, epsilon, tau, env):
         self.gamma = gamma
         self.epsilon = epsilon
+        self.tau = tau
         self.env = env
 
     def one_step_lookahead(self, s_values, s):
@@ -32,7 +34,7 @@ class ValueIteration:
         q_values = self.one_step_lookahead(v_list, s)
 
         if method == "softmax":
-            q_probs = softmax(q_values)
+            q_probs = softmax(q_values, self.tau)
             action_index = np.random.choice(len(q_probs), p=q_probs)
         elif method == "max":
             a_indices = [
