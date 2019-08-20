@@ -13,13 +13,16 @@ from util import GOAL_SPACE
 
 
 @click.command()
-@click.option("--goal-ind", default=0, help="goal index: 0 or 1")
+@click.option("--goal-ind", default=2, help="goal index: 0 or 1")
 @click.option("--env-type",
-              default=1,
+              default=0,
               help="env type: 0(cannot move), 1(move)")
 @click.option("--train", default=False, help="train flag")
 @click.option("--test", default=True, help="test flag")
-def main(goal_ind, env_type, train, test):
+@click.option("--display",
+              default=True,
+              help="flag for turning on the renderer")
+def main(goal_ind, env_type, train, test, display):
     env_size = (2, 8)
     goal = GOAL_SPACE[goal_ind]
     obj_poss = [(0, 0), (0, 6)]
@@ -60,8 +63,9 @@ def main(goal_ind, env_type, train, test):
         if curr_step >= max_episode_len:
             break
 
-        # print("curr state", state)
-        render(state)
+        if display:
+            render(state)
+
         print("curr step:", curr_step)
         if env.is_terminal_state(state):
             print("Reached terminal state")

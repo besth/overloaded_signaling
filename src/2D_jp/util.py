@@ -1,6 +1,6 @@
 from enum import Enum
 
-GOAL_SPACE = [{0}, {1}]
+GOAL_SPACE = [{0}, {1}, set()]
 GOAL_REWARD = 100
 ACTION_COST = 1
 PICKUP_COST = 10
