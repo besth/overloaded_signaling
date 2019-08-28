@@ -47,8 +47,9 @@ class ValueIteration:
 
         return action
 
-    def __call__(self, goal):
-        self.env.set_goal(goal)
+    def __call__(self, goal=None):
+        if goal is not None:
+            self.env.set_goal(goal)
 
         # initialize value for all states(including terminal states)
         s_values = np.zeros_like(self.env.state_space_encoding)

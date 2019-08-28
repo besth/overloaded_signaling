@@ -22,6 +22,7 @@ SIGNAL_REW_DICT = {
     }
 }
 WORLD_DICT_INV = {0: "hands-free", 1: "hands-tied"}
+# GOAL_DICT_INV = {0: 'A', 1: 'B'}
 GOAL_DICT_INV = {0: 'A', 1: 'B'}
 
 SIGNAL_DICT = {v: k for k, v in SIGNAL_DICT_INV.items()}

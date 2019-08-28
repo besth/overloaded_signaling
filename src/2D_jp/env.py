@@ -3,7 +3,7 @@ import numpy as np
 import itertools as it
 
 # local import
-from util import GOAL_REWARD, ACTION_COST, StateEncoding, PICKUP_COST
+from util import GOAL_REWARD, ACTION_COST, StateEncoding, PICKUP_COST, WORLD_DICT
 
 
 class Env2D:
@@ -109,7 +109,7 @@ class Env2D:
             next_state.append(c)
 
         # A2 cannot move if env_type is 0
-        if self.env_type == 0:
+        if self.env_type == WORLD_DICT["hands-tied"]:
             next_state[1] = state[1][:]
             next_state[3] = state[3]
 

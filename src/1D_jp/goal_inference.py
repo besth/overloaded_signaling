@@ -95,10 +95,10 @@ def plot(path="plot/"):
     worlds = list(WORLD_DICT.keys())
     worlds_ind = [WORLD_DICT[w] for w in worlds]
 
-    signals = ["help", "help-Any"]
+    signals = ["help"]
     signals_ind = [SIGNAL_DICT[s] for s in signals]
 
-    betas = np.arange(0, 0.55, 0.05).round(2)
+    betas = np.arange(0, 0.5, 0.1).round(2)
     # p_fars = np.zeros((len(signals), len(betas)))
     fig, axs = plt.subplots(len(signals), len(betas), sharey=True)
 
@@ -115,22 +115,29 @@ def plot(path="plot/"):
             x1 = np.arange(len(p_far))
             x2 = [x + bar_width for x in x1]
 
-            curr = axs[s_i, b_i]
-            curr.bar(x1,
-                     p_far_gt,
-                     color=[(0.2, 0.4, 0.6, 0.9), (0.6, 0.4, 0.2, 0.9)],
-                     yerr=error,
-                     width=bar_width)
-            curr.bar(x2,
-                     p_far,
-                     color=[(0.2, 0.4, 0.6, 0.5), (0.6, 0.4, 0.2, 0.5)],
-                     width=bar_width)
+            # curr = axs[s_i, b_i]
+            curr = axs[b_i]
+            line_1 = curr.bar(x1,
+                              p_far_gt,
+                              color=[(0.2, 0.4, 0.6, 0.9),
+                                     (0.6, 0.4, 0.2, 0.9)],
+                              yerr=error,
+                              width=bar_width)
+            line_2 = curr.bar(x2,
+                              p_far,
+                              color=[(0.2, 0.4, 0.6, 0.5),
+                                     (0.6, 0.4, 0.2, 0.5)],
+                              width=bar_width)
 
-            curr.set_title("beta= {}".format(betas[b_i]), fontsize=6)
+            curr.set_title("beta= {}".format(betas[b_i]), fontsize=12)
             # curr.set_xticks([0, 1], ["HF", "HT"])
             if b_i == 0:
                 curr.set(ylabel=signals[s_i])
+                curr.yaxis.get_label().set_fontsize(12)
 
+    plt.figlegend((line_1, line_2), ("Human result", "Model prediction"),
+                  loc="upper left",
+                  fontsize=12)
     plt.setp(axs, xticks=[0, 1], xticklabels=['HF', 'HT'])
     if not os.path.exists(path):
         os.mkdir(path)

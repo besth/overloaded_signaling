@@ -1,15 +1,19 @@
 import os
 
+import time
 import click
+import pygame
 import numpy as np
 import matplotlib.pyplot as plt
+from pygame.locals import *
 
 # local imports
 from env import Env2D
 from algo import ValueIteration
-from rendering import Render2DGrid
+from rendering import Render2DGrid, Render
+from inference import GoalInference
 
-from util import GOAL_SPACE
+from util import GOAL_SPACE, WORLD_DICT
 
 
 def get_perf_measure(vi, num_tests):
@@ -79,27 +83,28 @@ def get_perf_measure(vi, num_tests):
 
 
 @click.command()
-@click.option("--goal-ind", default=1, help="goal index: 0 or 1")
-@click.option("--env-type",
-              default=0,
+@click.option("--goal-ind", default=0, help="goal index: 0 or 1")
+@click.option("--world",
+              default="hands-free",
               help="env type: 0(cannot move), 1(move)")
 @click.option("--train", default=False, help="train flag")
-@click.option("--test", default=False, help="test flag")
+@click.option("--test", default=True, help="test flag")
 @click.option("--display",
-              default=False,
+              default=True,
               help="flag for turning on the renderer")
 @click.option("--save-perf",
-              default=True,
+              default=False,
               help="whether to save the testing performance")
 @click.option("--num-tests",
               default=1000,
               help="number of tests to be averaged over")
-def run(goal_ind, env_type, train, test, display, save_perf, num_tests):
+def run(goal_ind, world, train, test, display, save_perf, num_tests):
     env_size = (2, 8)
     goal = GOAL_SPACE[goal_ind]
     obj_poss = [(0, 0), (0, 6)]
 
     terminal_pos = (0, env_size[1] - 1)
+    env_type = WORLD_DICT[world]
     env = Env2D(env_size=env_size,
                 env_type=env_type,
                 goal=goal,
@@ -111,20 +116,34 @@ def run(goal_ind, env_type, train, test, display, save_perf, num_tests):
     tau = 0.2
     vi_jp = ValueIteration(gamma=gamma, epsilon=epsilon, tau=tau, env=env)
 
-    render = Render2DGrid(env)
+    # render = Render2DGrid(env)
+    render = Render(env_type=env_type)
 
     # get value table
     if train:
         v_states = vi_jp(goal)
         print("value iteration finished, saving...")
-        np.save("save_points/v_table_{}_{}.npy".format(goal_ind, env_type),
-                v_states)
+        np.save(
+            "save_points/v_table_{}_{}_bak2.npy".format(goal_ind, env_type),
+            v_states)
 
     if test:
         v_states = np.load("save_points/v_table_{}_{}.npy".format(
             goal_ind, env_type))
 
+        # perform goal inference after we get v_tables
+        beta = 1
+        GI = GoalInference(beta=beta, env=env, vi_obj=vi_jp, v_table=v_states)
+
         start_state = ((1, 3), (0, 7), set(), set())
+
+        # llh = GI.compute_likelihood(goal_ind, env_type, start_state)
+        # print(llh, np.argmax(llh), GI.action_sigs_pruned[np.argmax(llh)])
+
+        # goal_d = GI(((0, 0), 0), env_type, start_state)
+        # print("goal_d", goal_d)
+
+        # exit()
 
         max_episode_len = 20
         state = start_state
@@ -136,10 +155,21 @@ def run(goal_ind, env_type, train, test, display, save_perf, num_tests):
 
             if display:
                 render(state)
+                for event in pygame.event.get():
+                    if event.type == QUIT:
+                        pygame.quit()
+
+                time.sleep(0.2)
 
             print("curr step:", curr_step)
             if env.is_terminal_state(state):
                 print("Reached terminal state")
+                if display:
+                    while True:
+                        render(state)
+                        for event in pygame.event.get():
+                            if event.type == QUIT:
+                                pygame.quit()
                 break
 
             action = vi_jp.select_action(v_states, state, method="max")
