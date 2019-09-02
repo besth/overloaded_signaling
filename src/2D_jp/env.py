@@ -27,7 +27,10 @@ class Env2D:
         self.actions = [(1, 0), (-1, 0), (0, 1), (0, -1), (0, 0)]
         self.num_actions = len(self.actions)
 
-        self.action_space = list(it.product(*[self.actions, self.actions]))
+        if self.env_type == WORLD_DICT["hands-tied"]:
+            self.action_space = list(it.product(*[self.actions, [(0, 0)]]))
+        else:
+            self.action_space = list(it.product(*[self.actions, self.actions]))
 
         self.positions = [(x, y) for x in range(self.env_size[0])
                           for y in range(self.env_size[1])]
@@ -108,15 +111,6 @@ class Env2D:
         for c in curr_coll:
             next_state.append(c)
 
-        # A2 cannot move if env_type is 0
-        if self.env_type == WORLD_DICT["hands-tied"]:
-            next_state[1] = state[1][:]
-            next_state[3] = state[3]
-
-        if self.env_type == 2:
-            next_state[0] = state[0][:]
-            next_state[2] = state[2]
-
         return tuple(next_state)
 
     def get_total_coll(self, c1, c2):
@@ -129,7 +123,6 @@ class Env2D:
 
     def reward(self, state, action):
         next_state = self.transition(state, action)
-        # print(state, action, next_state)
         poss = next_state[:2]
         colls = next_state[-2:]
 
@@ -176,15 +169,6 @@ class Env2D:
             coll = state[i + self.num_agents]
             if self._is_terminal_state_single(pos, coll):
                 return True
-
-        # # early termination if wrong things in collection already
-        # colls = state[-2:]
-        # # goal is not both but both in some collection
-        # if len(self.goal) != 2 and any([len(coll) == 2 for coll in colls]):
-        #     return True
-        # elif len(self.goal) == 2:
-        #     if len(colls[0]) == 1 and len(colls[1]) == 1:
-        #         return True
 
         return False
 

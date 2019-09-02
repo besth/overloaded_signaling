@@ -86,11 +86,11 @@ def get_perf_measure(vi, num_tests):
 @click.option("--goal-ind", default=0, help="goal index: 0 or 1")
 @click.option("--world",
               default="hands-free",
-              help="env type: 0(cannot move), 1(move)")
-@click.option("--train", default=False, help="train flag")
+              help="two worlds: 'hands-free' or 'hands-tied'")
+@click.option("--train", default=True, help="train flag")
 @click.option("--test", default=True, help="test flag")
 @click.option("--display",
-              default=False,
+              default=True,
               help="flag for turning on the renderer")
 @click.option("--save-perf",
               default=False,
@@ -129,8 +129,9 @@ def run(goal_ind, world, train, test, display, save_perf, num_tests):
         #     v_states)
 
     if test:
-        v_states = np.load("save_points/v_table_{}_{}_test.npy".format(
-            goal_ind, env_type))
+        v_states = np.load(
+            "save_points/v_table_{}_{}_two_goal_reduce_a_space.npy".format(
+                goal_ind, env_type))
 
         # perform goal inference after we get v_tables
         beta = 0.1
@@ -141,10 +142,10 @@ def run(goal_ind, world, train, test, display, save_perf, num_tests):
         # llh = GI.compute_likelihood(goal_ind, env_type, start_state)
         # print(llh, np.argmax(llh), GI.action_sigs_pruned[np.argmax(llh)])
 
-        goal_d = GI(((0, 0), 0), env_type, start_state)
-        print("goal_d", goal_d)
+        # goal_d = GI(((0, 0), 0), env_type, start_state)
+        # print("goal_d", goal_d)
 
-        exit()
+        # exit()
         while True:
             max_episode_len = 20
             state = start_state
@@ -190,5 +191,5 @@ def run(goal_ind, world, train, test, display, save_perf, num_tests):
               file=f)
 
 
-# if __name__ == "__main__":
-#     run()
+if __name__ == "__main__":
+    run()

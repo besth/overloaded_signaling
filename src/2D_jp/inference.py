@@ -60,7 +60,8 @@ class GoalInference:
         lex = np.zeros((len(self.signals), len(self.goals)))
 
         # sig = "help" --> [0.5, 0.5]
-        lex[SIGNAL_DICT["help"]][:] = 1 / len(self.goals)
+        # lex[SIGNAL_DICT["help"]][:] = 1 / len(self.goals)
+        lex[SIGNAL_DICT["help"]][:] = 1
 
         # sig = "help-A" --> [1, 0]
         lex[SIGNAL_DICT["help-A"]][GOAL_DICT['A']] = 1
@@ -102,16 +103,8 @@ class GoalInference:
             if self.env.action_space[i][1] == action
         ]
 
-        # q_values_given_a_2 = []
-        # for i, q in enumerate(q_values):
-        #     if self.env.action_space[i][1] == action:
-        #         q_values_given_a_2.append(q)
-        #     else:
-        #         print("not equal", self.env.action_space[i][1], action)
-
-        # exit()
-        # reward = self.lexicon[signal][goal] * max(q_values_given_a_2)
-        reward = max(q_values_given_a_2)
+        reward = self.lexicon[signal][goal] * max(q_values_given_a_2)
+        # reward = max(q_values_given_a_2)
 
         return reward
 

@@ -6,7 +6,7 @@ import pygame
 from pygame.locals import *
 
 from env import Env2D
-from util import GOAL_SPACE, Color
+from util import GOAL_SPACE, Color, WORLD_DICT_INV
 
 
 class Render2DGrid:
@@ -60,7 +60,8 @@ class Render:
         pygame.init()
         # initialize surface
         self.display = pygame.display.set_mode(size=self.screen_size)
-        self.caption = "Hands-Free" if self.env_type == 0 else "Hands-tied"
+        self.caption = WORLD_DICT_INV[self.env_type]
+
         pygame.display.set_caption(self.caption)
 
         # scaling factors
@@ -85,8 +86,6 @@ class Render:
     def reset(self):
         self.display.fill(Color.L_GREY.value)
 
-        # pygame.draw.line(self.display, (0, 0, 0), (650, 300), (650, 450), 10)
-
         for i, ag_pos in enumerate(self.ag_init_pos):
             self.display.blit(
                 self.ag_imgs[i],
@@ -96,9 +95,6 @@ class Render:
             self.display.blit(
                 self.obj_img,
                 list(x * self.pos_scale for x in reversed(obj_pos)))
-
-            # while True:
-            #     pygame.display.update()
 
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -133,11 +129,6 @@ class Render:
         self.draw_grid()
         if self.env_type == 1:
             self.draw_wall()
-        # if self.env_type == 1:
-        #     pygame.draw.line(self.display, (0, 0, 0), (1025, 0), (1025, 75),
-        #                      10)
-        #     pygame.draw.line(self.display, (0, 0, 0), (1025, 75), (1100, 75),
-        #                      10)
 
         # extract positions
         rec_pos, sp_pos, rec_store, sp_store = states

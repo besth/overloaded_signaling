@@ -80,7 +80,7 @@ class ValueIteration:
         goal_ind = GOAL_SPACE.index(self.env.goal)
         env_type = self.env.env_type
         np.save(
-            "src/save_points/v_table_{}_{}_test.npy".format(
+            "save_points/v_table_{}_{}_two_goal_reduce_a_space.npy".format(
                 goal_ind, env_type), s_values)
 
         return s_values
