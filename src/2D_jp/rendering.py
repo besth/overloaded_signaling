@@ -44,7 +44,7 @@ class Render2DGrid:
 
 class Render:
     def __init__(self,
-                 fps=30,
+                 fps=1000,
                  screen_size=(480, 112),
                  env_type=1,
                  obj_init_pos=[(0, 0), (0, 6)],

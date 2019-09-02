@@ -1,7 +1,7 @@
 from enum import Enum
 
 GOAL_SPACE = [{0}, {1}, set()]
-ENV_TYPES = {0: "Hands-Tied", 1: "Hands-Free"}
+# ENV_TYPES = {0: "Hands-Tied", 1: "Hands-Free"}
 
 GOAL_REWARD = 100
 ACTION_COST = 1
@@ -16,7 +16,7 @@ SIGNAL_DICT_INV = {
     4: "get-A",
     5: "get-B"
 }
-SIGNAL_REW_DICT = {0: -1, 1: -100, 2: -100, 3: -100, 4: 0, 5: 0}
+SIGNAL_REW_DICT = {0: -0.01, 1: -2, 2: -2, 3: -2, 4: 0, 5: 0}
 WORLD_DICT_INV = {0: "hands-free", 1: "hands-tied"}
 # GOAL_DICT_INV = {0: 'A', 1: 'B', 2: "Any"}
 GOAL_DICT_INV = {0: 'A', 1: 'B'}

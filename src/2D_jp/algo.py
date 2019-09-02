@@ -1,6 +1,6 @@
 import copy
 import numpy as np
-from util import StateEncoding
+from util import StateEncoding, GOAL_SPACE
 
 
 def softmax(values: list, temp=1.0):
@@ -56,7 +56,8 @@ class ValueIteration:
         total_states = np.size(s_values)
         curr_iter = 0
         while True:
-            print("current iteration:", curr_iter)
+            print("current iteration:", curr_iter, ", current goal:",
+                  self.env.goal)
             error = 0
 
             for s in self.env.state_space:
@@ -74,5 +75,12 @@ class ValueIteration:
             if error < self.epsilon:
                 break
             curr_iter += 1
+
+        # save results for multi-threading
+        goal_ind = GOAL_SPACE.index(self.env.goal)
+        env_type = self.env.env_type
+        np.save(
+            "src/save_points/v_table_{}_{}_test.npy".format(
+                goal_ind, env_type), s_values)
 
         return s_values

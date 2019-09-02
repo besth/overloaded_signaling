@@ -8,6 +8,14 @@ from env import Env2D
 from util import SIGNAL_DICT, WORLD_DICT, GOAL_DICT, SIGNAL_DICT, WORLD_DICT, GOAL_DICT, GOAL_REWARD, SIGNAL_REW_DICT, GOAL_SPACE
 
 
+def softmax(values: list, temp=1.0):
+    reweighted = np.asarray(values) / temp
+    exp_values = np.exp(reweighted)
+    sm_values = exp_values / np.sum(exp_values)
+
+    return sm_values
+
+
 class GoalInference:
     def __init__(self, beta, env, vi_obj, v_table):
         self.beta = beta
@@ -86,59 +94,62 @@ class GoalInference:
     def reward_signal(self, signal: int):
         return SIGNAL_REW_DICT[signal]
 
-    def reward_goal(self, goal, action_sig: tuple, curr_state):
+    def reward_goal(self, goal, action_sig: tuple, curr_state, q_values):
         action, signal = action_sig
-        q_values = self.vi_obj.one_step_lookahead(self.v_table, curr_state)
-        # print(q_values)
-        print(list(zip(self.env.action_space, q_values)))
+
         q_values_given_a_2 = [
             q for i, q in enumerate(q_values)
             if self.env.action_space[i][1] == action
         ]
-        print("max q value", max(q_values_given_a_2))
-        print(signal, goal, self.lexicon[signal][goal])
 
-        reward = self.lexicon[signal][goal] * max(q_values_given_a_2)
+        # q_values_given_a_2 = []
+        # for i, q in enumerate(q_values):
+        #     if self.env.action_space[i][1] == action:
+        #         q_values_given_a_2.append(q)
+        #     else:
+        #         print("not equal", self.env.action_space[i][1], action)
+
+        # exit()
+        # reward = self.lexicon[signal][goal] * max(q_values_given_a_2)
+        reward = max(q_values_given_a_2)
 
         return reward
 
-        # q_values = self.vi_obj.one_step_lookahead(self.v_table, curr_state)
-        # reward = 0
-        # for goal in self.goals:
-        #     q_values = self.vi_obj[goal].one_step_lookahead(
-        #         self.v_table[goal], curr_state)
-        # q_values_given_a_2 = []
-        # for i, joint_a in enumerate(self.env.action_space):
-        #     if joint_a[1] != action:
-        #         continue
-        #     q_values_given_a_2.append(q_values[i])
-
-        # q_values_given_a_2 = [
-        #     q for i, q in enumerate(q_values)
-        #     if self.env.action_space[i][1] == action
-        # ]
-
-        # reward += self.lexicon[signal][goal] * max(q_values_given_a_2)
-
-        # return reward
-
-    def compute_likelihood(self, goal, world, curr_state):
+    def compute_likelihood(self, goal, world, curr_state, q_values):
         llhs = [
             np.exp(self.beta *
                    (self.reward_signal(action_sig[1]) +
-                    self.reward_goal(goal, action_sig, curr_state)))
+                    self.reward_goal(goal, action_sig, curr_state, q_values)))
             for action_sig in self.action_sigs_pruned
         ]
 
+        # print("goal", goal)
+
+        # llhs = []
+        # for action_sig in self.action_sigs_pruned:
+        #     sig_rew = self.reward_signal(action_sig[1])
+        #     goal_rew = self.reward_goal(goal, action_sig, curr_state, q_values)
+        #     print("action sig:", action_sig, " signal reward:", sig_rew,
+        #           " goal reward:", goal_rew, " total:",
+        #           self.beta * (sig_rew + goal_rew))
+
         normalized_llhs = np.asarray(llhs) / np.sum(llhs)
+        # exit()
+        print("goal:", goal, "likelihood:",
+              list(zip(normalized_llhs, self.action_sigs_pruned)))
 
         return normalized_llhs
 
     def __call__(self, action_sig, world, curr_state):
+
+        # compute q values here to reduce duplicate computation
+        q_values = self.vi_obj.one_step_lookahead(self.v_table, curr_state)
+        print(list(zip(self.env.action_space, q_values)))
+
         goal_dist = [
             self.compute_likelihood(
-                goal, world,
-                curr_state)[self.action_sigs_pruned.index(action_sig)] *
+                goal, world, curr_state,
+                q_values)[self.action_sigs_pruned.index(action_sig)] *
             self.goal_prior[goal] for goal in self.goals
         ]
 

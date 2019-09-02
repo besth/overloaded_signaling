@@ -90,7 +90,7 @@ def get_perf_measure(vi, num_tests):
 @click.option("--train", default=False, help="train flag")
 @click.option("--test", default=True, help="test flag")
 @click.option("--display",
-              default=True,
+              default=False,
               help="flag for turning on the renderer")
 @click.option("--save-perf",
               default=False,
@@ -116,23 +116,24 @@ def run(goal_ind, world, train, test, display, save_perf, num_tests):
     tau = 0.2
     vi_jp = ValueIteration(gamma=gamma, epsilon=epsilon, tau=tau, env=env)
 
-    # render = Render2DGrid(env)
-    render = Render(env_type=env_type)
+    if display:
+        # render = Render2DGrid(env)
+        render = Render(env_type=env_type)
 
     # get value table
     if train:
         v_states = vi_jp(goal)
-        print("value iteration finished, saving...")
-        np.save(
-            "save_points/v_table_{}_{}_bak2.npy".format(goal_ind, env_type),
-            v_states)
+        print("value iteration finished.")
+        # np.save(
+        #     "save_points/v_table_{}_{}_test.npy".format(goal_ind, env_type),
+        #     v_states)
 
     if test:
-        v_states = np.load("save_points/v_table_{}_{}.npy".format(
+        v_states = np.load("save_points/v_table_{}_{}_test.npy".format(
             goal_ind, env_type))
 
         # perform goal inference after we get v_tables
-        beta = 1
+        beta = 0.1
         GI = GoalInference(beta=beta, env=env, vi_obj=vi_jp, v_table=v_states)
 
         start_state = ((1, 3), (0, 7), set(), set())
@@ -140,45 +141,46 @@ def run(goal_ind, world, train, test, display, save_perf, num_tests):
         # llh = GI.compute_likelihood(goal_ind, env_type, start_state)
         # print(llh, np.argmax(llh), GI.action_sigs_pruned[np.argmax(llh)])
 
-        # goal_d = GI(((0, 0), 0), env_type, start_state)
-        # print("goal_d", goal_d)
+        goal_d = GI(((0, 0), 0), env_type, start_state)
+        print("goal_d", goal_d)
 
-        # exit()
-
-        max_episode_len = 20
-        state = start_state
-        curr_step = 0
-
+        exit()
         while True:
-            if curr_step >= max_episode_len:
-                break
+            max_episode_len = 20
+            state = start_state
+            curr_step = 0
 
-            if display:
-                render(state)
-                for event in pygame.event.get():
-                    if event.type == QUIT:
-                        pygame.quit()
+            while True:
+                if curr_step >= max_episode_len:
+                    break
 
-                time.sleep(0.2)
-
-            print("curr step:", curr_step)
-            if env.is_terminal_state(state):
-                print("Reached terminal state")
                 if display:
-                    while True:
+                    render(state)
+                    for event in pygame.event.get():
+                        if event.type == QUIT:
+                            pygame.quit()
+
+                    time.sleep(0.3)
+
+                print("curr step:", curr_step)
+                if env.is_terminal_state(state):
+                    print("Reached terminal state")
+                    if display:
                         render(state)
-                        for event in pygame.event.get():
-                            if event.type == QUIT:
-                                pygame.quit()
-                break
+                        # while True:
+                        #     render(state)
+                        #     for event in pygame.event.get():
+                        #         if event.type == QUIT:
+                        #             pygame.quit()
+                    break
 
-            action = vi_jp.select_action(v_states, state, method="max")
+                action = vi_jp.select_action(v_states, state, method="max")
 
-            next_state = env.transition(state, action)
+                next_state = env.transition(state, action)
 
-            state = next_state
+                state = next_state
 
-            curr_step += 1
+                curr_step += 1
 
     if save_perf:
         opt, avg, error = get_perf_measure(vi=vi_jp, num_tests=num_tests)
@@ -188,5 +190,5 @@ def run(goal_ind, world, train, test, display, save_perf, num_tests):
               file=f)
 
 
-if __name__ == "__main__":
-    run()
+# if __name__ == "__main__":
+#     run()

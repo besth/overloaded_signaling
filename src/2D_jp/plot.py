@@ -2,10 +2,10 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from util import GOAL_SPACE, ENV_TYPES
+from util import GOAL_SPACE, WORLD_DICT_INV
 
 num_goals = len(GOAL_SPACE)
-num_envs = len(ENV_TYPES)
+num_envs = len(WORLD_DICT_INV)
 
 
 def plot_avg_steps():
@@ -49,7 +49,8 @@ def plot_avg_steps():
                 curr.text(i - 0.1, v + 0.1, str(v), fontweight='bold')
 
             if g_i == 0:
-                curr.set_title("Env: {}".format(ENV_TYPES[e_i]), fontsize=10)
+                curr.set_title("Env: {}".format(WORLD_DICT_INV[e_i]),
+                               fontsize=10)
             if e_i == 0:
                 curr.set(ylabel="goal: {}".format(goal_name[g_i]))
 

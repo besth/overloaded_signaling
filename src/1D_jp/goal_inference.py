@@ -117,12 +117,12 @@ def plot(path="plot/"):
 
             # curr = axs[s_i, b_i]
             curr = axs[b_i]
-            line_1 = curr.bar(x1,
-                              p_far_gt,
-                              color=[(0.2, 0.4, 0.6, 0.9),
-                                     (0.6, 0.4, 0.2, 0.9)],
-                              yerr=error,
-                              width=bar_width)
+            line_1 = curr.bar(
+                x1,
+                p_far_gt,
+                color=[(0.2, 0.4, 0.6, 0.9), (0.6, 0.4, 0.2, 0.9)],
+                #   yerr=error,
+                width=bar_width)
             line_2 = curr.bar(x2,
                               p_far,
                               color=[(0.2, 0.4, 0.6, 0.5),
