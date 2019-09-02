@@ -13,13 +13,14 @@ SIGNAL_DICT_INV = {
     4: "get-A",
     5: "get-B"
 }
-SIGNAL_REW_DICT = {0: -0.01, 1: -2, 2: -2, 3: -2, 4: 0, 5: 0}
+SIGNAL_REW_DICT = {0: -1, 1: -2, 2: -2, 3: -2, 4: 0, 5: 0}
 WORLD_DICT_INV = {0: "hands-free", 1: "hands-tied"}
 
 # TODO: combine goal space and dictionary
-GOAL_SPACE = [{0}, {1}, set()]
-GOAL_DICT_INV = {0: 'A', 1: 'B', 2: "Any"}
-# GOAL_DICT_INV = {0: 'A', 1: 'B'}
+# GOAL_SPACE = [{0}, {1}, set()]
+# GOAL_DICT_INV = {0: 'A', 1: 'B', 2: "Any"}
+GOAL_DICT_INV = {0: 'A', 1: 'B'}
+GOAL_SPACE = [{0}, {1}]
 
 SIGNAL_DICT = {v: k for k, v in SIGNAL_DICT_INV.items()}
 WORLD_DICT = {v: k for k, v in WORLD_DICT_INV.items()}

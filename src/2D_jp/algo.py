@@ -11,6 +11,19 @@ def softmax(values: list, temp=1.0):
     return sm_values
 
 
+def one_step_lookahead(env, s_values, curr_s, gamma):
+    q_values = []
+    for a in env.action_space:
+        next_state = env.transition(curr_s, a)
+        reward = env.reward(curr_s, a)
+
+        next_state_ind = env.get_state_index(next_state)
+
+        q_values.append(reward + gamma * s_values[next_state_ind])
+
+    return q_values
+
+
 class ValueIteration:
     def __init__(self, gamma, epsilon, tau, env):
         self.gamma = gamma
@@ -18,20 +31,8 @@ class ValueIteration:
         self.tau = tau
         self.env = env
 
-    def one_step_lookahead(self, s_values, s):
-        q_values = []
-        for a in self.env.action_space:
-            next_state = self.env.transition(s, a)
-            reward = self.env.reward(s, a)
-
-            next_state_ind = self.env.get_state_index(next_state)
-
-            q_values.append(reward + self.gamma * s_values[next_state_ind])
-
-        return q_values
-
     def select_action(self, v_list, s, method="softmax"):
-        q_values = self.one_step_lookahead(v_list, s)
+        q_values = one_step_lookahead(self.env, v_list, s, self.gamma)
 
         if method == "softmax":
             q_probs = softmax(q_values, self.tau)
@@ -47,7 +48,7 @@ class ValueIteration:
 
         return action
 
-    def __call__(self, goal=None):
+    def __call__(self, goal=None, path=None):
         if goal is not None:
             self.env.set_goal(goal)
 
@@ -66,7 +67,8 @@ class ValueIteration:
                 if self.env.state_space_encoding[
                         s_ind] == StateEncoding.GOOD.value:
                     curr_v = s_values[s_ind]
-                    q_values = self.one_step_lookahead(s_values, s)
+                    q_values = one_step_lookahead(self.env, s_values, s,
+                                                  self.gamma)
                     max_q = max(q_values)
                     s_values[s_ind] = max_q
                     error = max(error, abs(curr_v - max_q))
@@ -77,10 +79,11 @@ class ValueIteration:
             curr_iter += 1
 
         # save results for multi-threading
+        if path is None:
+            raise AssertionError
+
         goal_ind = GOAL_SPACE.index(self.env.goal)
         env_type = self.env.env_type
-        np.save(
-            "save_points/v_table_{}_{}_two_goal_reduce_a_space.npy".format(
-                goal_ind, env_type), s_values)
+        np.save(path, s_values)
 
         return s_values

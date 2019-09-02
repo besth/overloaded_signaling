@@ -87,7 +87,7 @@ def get_perf_measure(vi, num_tests):
 @click.option("--world",
               default="hands-free",
               help="two worlds: 'hands-free' or 'hands-tied'")
-@click.option("--train", default=True, help="train flag")
+@click.option("--train", default=False, help="train flag")
 @click.option("--test", default=True, help="test flag")
 @click.option("--display",
               default=True,
@@ -116,36 +116,39 @@ def run(goal_ind, world, train, test, display, save_perf, num_tests):
     tau = 0.2
     vi_jp = ValueIteration(gamma=gamma, epsilon=epsilon, tau=tau, env=env)
 
+    if not os.path.exists("save_points"):
+        os.makedirs("save_points")
+    save_path = "save_points/v_table_{}_{}_2_goals.npy".format(
+        goal_ind, env_type)
+
     if display:
         # render = Render2DGrid(env)
         render = Render(env_type=env_type)
 
     # get value table
     if train:
-        v_states = vi_jp(goal)
+        v_states = vi_jp(goal=goal, path=save_path)
         print("value iteration finished.")
-        # np.save(
-        #     "save_points/v_table_{}_{}_test.npy".format(goal_ind, env_type),
-        #     v_states)
 
     if test:
-        v_states = np.load(
-            "save_points/v_table_{}_{}_two_goal_reduce_a_space.npy".format(
-                goal_ind, env_type))
+        # v_states_list = []
+        # for goal_i in range(len(GOAL_SPACE)):
+        #     load_path = "save_points/v_table_{}_{}_2_goals.npy".format(
+        #         goal_i, env_type)
+        #     v_states_list.append(np.load(load_path))
 
-        # perform goal inference after we get v_tables
-        beta = 0.1
-        GI = GoalInference(beta=beta, env=env, vi_obj=vi_jp, v_table=v_states)
-
+        v_states = np.load(save_path)
         start_state = ((1, 3), (0, 7), set(), set())
 
-        # llh = GI.compute_likelihood(goal_ind, env_type, start_state)
-        # print(llh, np.argmax(llh), GI.action_sigs_pruned[np.argmax(llh)])
+        # select first step speaker action
 
+        # perform goal inference after we get v_tables
+        # beta = 0.1
+        # GI = GoalInference(beta=beta, env=env, vi_obj=vi_jp, v_table=v_states)
         # goal_d = GI(((0, 0), 0), env_type, start_state)
         # print("goal_d", goal_d)
-
         # exit()
+
         while True:
             max_episode_len = 20
             state = start_state

@@ -17,11 +17,11 @@ def softmax(values: list, temp=1.0):
 
 
 class GoalInference:
-    def __init__(self, beta, env, vi_obj, v_table):
+    def __init__(self, beta, env, vi_objs, v_tables):
         self.beta = beta
         self.env = env
-        self.vi_obj = vi_obj
-        self.v_table = v_table
+        self.vi_objs = vi_objs
+        self.v_tables = v_tables
 
         self.num_signals = len(SIGNAL_DICT)
         self.num_worlds = len(WORLD_DICT)
@@ -35,7 +35,10 @@ class GoalInference:
         self.goal_prior = self.get_goal_prior()
 
         self.actions = self.env.actions
-        self.action_sigs = list(it.product(*[self.actions, self.signals]))
+        if self.env.env_type == WORLD_DICT["hands-tied"]:
+            self.action_sigs = list(it.product(*[[(0, 0)], self.signals]))
+        else:
+            self.action_sigs = list(it.product(*[self.actions, self.signals]))
 
         # prune action_sigs
         self.action_sigs_pruned = copy.deepcopy(self.action_sigs)
@@ -50,8 +53,6 @@ class GoalInference:
             new_list.append(a_s)
 
         self.action_sigs_pruned = new_list
-        # print(self.action_sigs, len(self.action_sigs))
-        # print(self.action_sigs_pruned, len(self.action_sigs_pruned))
 
     def get_goal_prior(self):
         return [1 / len(self.goals) for _ in self.goals]
@@ -76,9 +77,10 @@ class GoalInference:
         # sig = "help-Any" --> [0.5, 0.5]
         # lex[SIGNAL_DICT["help-Any"]][GOAL_DICT['A']] = 0
         # lex[SIGNAL_DICT["help-Any"]][GOAL_DICT['B']] = 0
-        lex[SIGNAL_DICT["help-Any"]][GOAL_DICT['A']] = 0.5
-        lex[SIGNAL_DICT["help-Any"]][GOAL_DICT['B']] = 0.5
+        # lex[SIGNAL_DICT["help-Any"]][GOAL_DICT['A']] = 0.5
+        # lex[SIGNAL_DICT["help-Any"]][GOAL_DICT['B']] = 0.5
         # lex[SIGNAL_DICT["help-Any"]][GOAL_DICT["Any"]] = 1
+        lex[SIGNAL_DICT["help-Any"]][:] = 1
 
         # sig = "get-A" --> [1, 0]
         lex[SIGNAL_DICT["get-A"]][GOAL_DICT['A']] = 1
@@ -104,7 +106,8 @@ class GoalInference:
         ]
 
         reward = self.lexicon[signal][goal] * max(q_values_given_a_2)
-        # reward = max(q_values_given_a_2)
+        # if signal == 4:
+        #     print(self.lexicon[signal][goal], reward, "signal is 4, get A")
 
         return reward
 
@@ -116,18 +119,7 @@ class GoalInference:
             for action_sig in self.action_sigs_pruned
         ]
 
-        # print("goal", goal)
-
-        # llhs = []
-        # for action_sig in self.action_sigs_pruned:
-        #     sig_rew = self.reward_signal(action_sig[1])
-        #     goal_rew = self.reward_goal(goal, action_sig, curr_state, q_values)
-        #     print("action sig:", action_sig, " signal reward:", sig_rew,
-        #           " goal reward:", goal_rew, " total:",
-        #           self.beta * (sig_rew + goal_rew))
-
         normalized_llhs = np.asarray(llhs) / np.sum(llhs)
-        # exit()
         print("goal:", goal, "likelihood:",
               list(zip(normalized_llhs, self.action_sigs_pruned)))
 
@@ -135,16 +127,28 @@ class GoalInference:
 
     def __call__(self, action_sig, world, curr_state):
 
-        # compute q values here to reduce duplicate computation
-        q_values = self.vi_obj.one_step_lookahead(self.v_table, curr_state)
-        print(list(zip(self.env.action_space, q_values)))
+        goal_dist = []
+        for i, goal in enumerate(self.goals):
+            q_values = self.vi_objs[i].one_step_lookahead(
+                self.v_tables[i], curr_state)
+            print("goal:", goal)
+            print(list(zip(self.env.action_space, q_values)))
 
-        goal_dist = [
-            self.compute_likelihood(
+            goal_prob = self.compute_likelihood(
                 goal, world, curr_state,
-                q_values)[self.action_sigs_pruned.index(action_sig)] *
-            self.goal_prior[goal] for goal in self.goals
-        ]
+                q_values)[self.action_sigs_pruned.index(action_sig)]
+            goal_dist.append(goal_prob)
+
+        # compute q values here to reduce duplicate computation
+        # q_values = self.vi_obj.one_step_lookahead(self.v_table, curr_state)
+        # print(list(zip(self.env.action_space, q_values)))
+
+        # goal_dist = [
+        #     self.compute_likelihood(
+        #         goal, world, curr_state,
+        #         q_values)[self.action_sigs_pruned.index(action_sig)] *
+        #     self.goal_prior[goal] for goal in self.goals
+        # ]
 
         # normalize
         goal_dist = np.array(goal_dist) / np.sum(goal_dist)
