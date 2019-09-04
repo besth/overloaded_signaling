@@ -1,19 +1,23 @@
 from enum import Enum
 
-GOAL_REWARD = 100
-ACTION_COST = 1
-PICKUP_COST = 10
+GOAL_REWARD = 1
+ACTION_COST = 0.01
+PICKUP_COST = 0.1
 
 # goal inference
-SIGNAL_DICT_INV = {
-    0: "help",
-    1: "help-A",
-    2: "help-B",
-    3: "help-Any",
-    4: "get-A",
-    5: "get-B"
-}
-SIGNAL_REW_DICT = {0: -1, 1: -2, 2: -2, 3: -2, 4: 0, 5: 0}
+# SIGNAL_DICT_INV = {
+#     0: "help",
+#     1: "help-A",
+#     2: "help-B",
+#     3: "help-Any",
+#     4: "get-A",
+#     5: "get-B"
+# }
+# SIGNAL_REW_DICT = {0: -0.01, 1: -20, 2: -20, 3: -20, 4: 0, 5: 0}
+
+SIGNAL_DICT_INV = {0: "help", 1: "get-A", 2: "get-B"}
+SIGNAL_REW_DICT = {0: -0.01, 1: 0, 2: 0}
+
 WORLD_DICT_INV = {0: "hands-free", 1: "hands-tied"}
 
 # TODO: combine goal space and dictionary

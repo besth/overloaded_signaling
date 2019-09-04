@@ -9,7 +9,7 @@ from pygame.locals import *
 
 # local imports
 from env import Env2D
-from algo import ValueIteration
+from algo import ValueIteration, one_step_lookahead
 from rendering import Render2DGrid, Render
 from inference import GoalInference
 
@@ -85,7 +85,7 @@ def get_perf_measure(vi, num_tests):
 @click.command()
 @click.option("--goal-ind", default=0, help="goal index: 0 or 1")
 @click.option("--world",
-              default="hands-free",
+              default="hands-tied",
               help="two worlds: 'hands-free' or 'hands-tied'")
 @click.option("--train", default=False, help="train flag")
 @click.option("--test", default=True, help="test flag")
@@ -118,7 +118,7 @@ def run(goal_ind, world, train, test, display, save_perf, num_tests):
 
     if not os.path.exists("save_points"):
         os.makedirs("save_points")
-    save_path = "save_points/v_table_{}_{}_2_goals.npy".format(
+    save_path = "save_points/v_table_{}_{}_2_goals_test.npy".format(
         goal_ind, env_type)
 
     if display:
@@ -128,26 +128,50 @@ def run(goal_ind, world, train, test, display, save_perf, num_tests):
     # get value table
     if train:
         v_states = vi_jp(goal=goal, path=save_path)
-        print("value iteration finished.")
+    #     print("value iteration finished.")
 
     if test:
-        # v_states_list = []
-        # for goal_i in range(len(GOAL_SPACE)):
-        #     load_path = "save_points/v_table_{}_{}_2_goals.npy".format(
-        #         goal_i, env_type)
-        #     v_states_list.append(np.load(load_path))
+        v_states_list = []
+        envs = []
+        for goal_i in range(len(GOAL_SPACE)):
+            load_path = "save_points/v_table_{}_{}_2_goals_test.npy".format(
+                goal_i, env_type)
+            v_states_list.append(np.load(load_path))
+            envs.append(
+                Env2D(env_size=env_size,
+                      env_type=env_type,
+                      goal=GOAL_SPACE[goal_i],
+                      obj_poss=obj_poss,
+                      terminal_pos=terminal_pos))
 
-        v_states = np.load(save_path)
+        beta = 10
+        temp = 0.01
+
+        GI = GoalInference(beta=beta, temp=temp, env=env)
         start_state = ((1, 3), (0, 7), set(), set())
 
         # select first step speaker action
+        v_states_gt = v_states_list[goal_ind]
+        q_values_gt = one_step_lookahead(env, v_states_gt, start_state, gamma)
+        act_sig_dist = GI.compute_likelihood(goal_ind, world, start_state,
+                                             q_values_gt)
+        act_sig = GI.action_sigs_pruned[np.argmax(act_sig_dist)]
+        print("selected", act_sig)
 
-        # perform goal inference after we get v_tables
-        # beta = 0.1
-        # GI = GoalInference(beta=beta, env=env, vi_obj=vi_jp, v_table=v_states)
-        # goal_d = GI(((0, 0), 0), env_type, start_state)
-        # print("goal_d", goal_d)
-        # exit()
+        # infer goal
+        q_values_list = []
+        for i in range(len(GOAL_SPACE)):
+            q_values_list.append(
+                one_step_lookahead(envs[i], v_states_list[i], start_state,
+                                   gamma))
+        goal_dist = GI(act_sig, world, start_state, q_values_list)
+
+        inferred_goal_ind = np.argmax(goal_dist)
+        print("inferred goal", inferred_goal_ind)
+        v_states_inferred = v_states_list[inferred_goal_ind]
+
+        # reset env goal
+        env.set_goal(GOAL_SPACE[inferred_goal_ind])
 
         while True:
             max_episode_len = 20
@@ -178,7 +202,9 @@ def run(goal_ind, world, train, test, display, save_perf, num_tests):
                         #             pygame.quit()
                     break
 
-                action = vi_jp.select_action(v_states, state, method="max")
+                action = vi_jp.select_action(v_states_inferred,
+                                             state,
+                                             method="max")
 
                 next_state = env.transition(state, action)
 
